@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>考研择校智能体</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  .tab-active{@apply bg-cyan-500 text-white;}
+  .tab-inactive{@apply bg-slate-100 text-slate-600 hover:bg-slate-200;}
+  .page-panel{display:none;}
+  .page-panel.active{display:block;}
+  .tier { border-radius: .75rem; padding: 1rem 1.25rem; margin: 1rem 0; border-left-width: 4px; }
+  .tier-chong { background: #fef2f2; border-left-color: #ef4444; }
+  .tier-wen   { background: #fffbeb; border-left-color: #f59e0b; }
+  .tier-bao   { background: #f0fdf4; border-left-color: #22c55e; }
+  .md { color: #1e293b; font-size: .95rem; }
+  .md h1 { font-size: 1.5rem; font-weight: 700; margin: .2rem 0 .8rem; }
+  .md h2 { font-size: 1.15rem; font-weight: 700; margin: 1.1rem 0 .5rem; }
+  .md h3 { font-size: 1rem;   font-weight: 600; margin: .9rem 0 .35rem; }
+  .md p  { margin: .5rem 0; line-height: 1.8; }
+  .md ul { list-style: disc;    padding-left: 1.4rem; margin: .5rem 0; }
+  .md ol { list-style: decimal; padding-left: 1.4rem; margin: .5rem 0; }
+  .md li { margin: .25rem 0; line-height: 1.75; }
+  .md hr { margin: 1rem 0; border-color: #e2e8f0; }
+  .md table { width: 100%; border-collapse: collapse; margin: .75rem 0; font-size: .85rem; }
+  .md th, .md td { border: 1px solid #e2e8f0; padding: .45rem .65rem; text-align: left; }
+  .md th { background: #f1f5f9; font-weight: 600; }
+  .md code { background: #f1f5f9; padding: .1rem .3rem; border-radius: .25rem; font-size: .85em; }
+  .md blockquote { border-left: 3px solid #cbd5e1; padding-left: .8rem; color: #475569; margin: .6rem 0; }
+  .md strong { font-weight: 700; }
+  #logPanel::-webkit-scrollbar { width: 6px; }
+  #logPanel::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+<header class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md">
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <h1 class="text-3xl font-bold tracking-wide">考研择校智能体</h1>
+    <p class="text-cyan-50 text-sm mt-2">数据库硬数据 + 博查联网搜索 + 向量检索</p>
+  </div>
+  <div class="max-w-7xl mx-auto px-6 pb-4 flex gap-2 flex-wrap">
+    <button data-tab="tab1" class="tab-btn px-4 py-2 rounded-lg tab-active">择校智能体</button>
+    <button data-tab="tab2" class="tab-btn px-4 py-2 rounded-lg tab-inactive">候选院校对比</button>
+    <button data-tab="tab3" class="tab-btn px-4 py-2 rounded-lg tab-inactive">AI学习计划</button>
+  </div>
+</header>
+<main class="max-w-7xl mx-auto px-6 py-8">
+<!-- Tab1：择校智能体 -->
+<div id="tab1" class="page-panel active">
+<div class="grid lg:grid-cols-12 gap-6 items-start">
+  <aside class="lg:col-span-4 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+    <h2 class="text-base font-semibold text-slate-700 mb-1">考生信息</h2>
+    <p class="text-xs text-slate-400 mb-5">填写后点击开始查询</p>
+    <form id="queryForm" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">预估分数</label>
+        <input id="score" type="number" min="0" max="500" value="310"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">本科层次</label>
+        <select id="level"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none">
+          <option value="双非">双非</option>
+          <option value="211">211</option>
+          <option value="985">985</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">报考专业</label>
+        <input id="major" type="text" value="控制科学与工程"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">学位类型</label>
+        <select id="degree"
+                class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none">
+          <option value="学硕">学硕</option>
+          <option value="专硕">专硕</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-slate-600 mb-1">意向省份</label>
+        <input id="regions" type="text" value="云南, 贵州" placeholder="多个用逗号分隔"
+               class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 outline-none" />
+      </div>
+      <div class="pt-2 space-y-2">
+        <button id="runBtn" type="submit"
+                class="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-medium px-4 py-2.5 rounded-lg shadow transition disabled:opacity-60 disabled:cursor-not-allowed">
+          <span id="btnText">开始查询</span>
+          <svg id="spinner" class="hidden w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+          </svg>
+        </button>
+        <button id="clearBtn" type="button"
+                class="w-full text-sm text-slate-500 hover:text-slate-700 border border-slate-200 hover:bg-slate-50 px-4 py-2 rounded-lg transition">
+          清空
+        </button>
+      </div>
+    </form>
+  </aside>
+  <section class="lg:col-span-8 space-y-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-slate-700">运行日志</h2>
+        <span id="logCount" class="text-xs text-slate-400">0 条</span>
+      </div>
+      <div id="logPanel" class="h-64 overflow-y-auto px-5 py-4 space-y-1.5 bg-slate-900 font-mono text-xs">
+        <div class="text-slate-500">等待提交…</div>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+        <h2 class="text-base font-semibold text-slate-700">择校报告</h2>
+        <div class="flex gap-2 text-xs">
+          <span class="px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-200">🔴 冲档</span>
+          <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">🟡 稳档</span>
+          <span class="px-2 py-0.5 rounded bg-green-50 text-green-600 border border-green-200">🟢 保档</span>
+        </div>
+      </div>
+      <div id="report" class="md px-6 py-5 overflow-y-auto" style="max-height: 32rem;">
+        <div class="text-slate-400 text-sm">报告会显示在这里。</div>
+      </div>
+      <!-- ========== 新增：本次推荐候选院校勾选区域 ========== -->
+      <div id="candidateWrap" class="border-t border-slate-200 px-6 py-4 hidden">
+        <h3 class="font-semibold text-slate-700 mb-3">本次推荐候选院校（勾选用于对比）</h3>
+        <div id="candidateList" class="flex flex-wrap gap-3 mb-4"></div>
+        <button id="goCompareBtn" class="bg-blue-500 text-white px-4 py-2 rounded-lg">对比选中院校</button>
+      </div>
+    </div>
+  </section>
+</div>
+</div>
+<!-- Tab2：候选院校对比 -->
+<div id="tab2" class="page-panel">
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+  <h2 class="text-lg font-semibold mb-4">候选院校多维横向对比</h2>
+  <div id="compareMissingTip" class="text-orange-600 bg-orange-50 p-3 rounded-lg mb-4 hidden"></div>
+  <div id="compareEmptyTip" class="text-slate-500">请先运行择校智能体，在报告下方勾选院校进行对比</div>
+  <div id="compareTableWrap" class="overflow-auto hidden"></div>
+</div>
+</div>
+<!-- Tab3：AI学习计划 -->
+<div id="tab3" class="page-panel">
+<div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 grid lg:grid-cols-12 gap-6">
+  <div class="lg:col-span-4">
+    <h2 class="text-base font-semibold mb-3">生成个性化学习计划</h2>
+    <form id="studyPlanForm" class="space-y-3">
+      <div>
+        <label class="text-sm block mb-1">考试日期</label>
+        <input id="spExamDate" type="date" class="w-full border rounded px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="text-sm block mb-1">每日学习时长(小时)</label>
+        <input id="spDailyHour" type="number" step="0.5" value="6" class="w-full border rounded px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="text-sm block mb-1">薄弱科目（逗号分隔）</label>
+        <input id="spWeak" value="数学,408" class="w-full border rounded px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="text-sm block mb-1">优势科目（逗号分隔）</label>
+        <input id="spStrong" value="英语" class="w-full border rounded px-3 py-2 text-sm">
+      </div>
+      <div>
+        <label class="text-sm block mb-1">目标总分</label>
+        <input id="spTarget" type="number" value="310" class="w-full border rounded px-3 py-2 text-sm">
+      </div>
+      <button type="submit" class="w-full bg-cyan-500 text-white py-2 rounded">生成AI学习计划</button>
+    </form>
+    <div class="mt-6">
+      <h3 class="font-semibold text-sm mb-2">本地打卡记录（保存在浏览器）</h3>
+      <div id="studyRecordBox"></div>
+      <button id="addRecordBtn" class="mt-2 border px-3 py-1 rounded text-sm">新增打卡</button>
+      <p class="text-xs text-slate-400 mt-2">⚠️所有学习数据仅保存在浏览器localStorage，清除缓存会丢失。</p>
+    </div>
+  </div>
+  <div class="lg:col-span-8">
+    <h2 class="text-base font-semibold mb-3">学习计划</h2>
+    <div id="planOutput" class="md border rounded p-4 min-h-96 text-slate-400">AI生成的计划将展示在这里</div>
+  </div>
+</div>
+</div>
+</main>
+<script>
+const API_URL = "/query";
+const API_COMPARE = "/school/compare_by_name";
+const API_STUDY_PLAN = "/studyplan/generate";
+let currentCandidateSchools = [];
+let selectedCompareNames = [];
+const el = (id) => document.getElementById(id);
+// Tab切换
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const tabId = btn.dataset.tab;
+    document.querySelectorAll(".tab-btn").forEach(b=>{b.classList.remove("tab-active");b.classList.add("tab-inactive");});
+    btn.classList.remove("tab-inactive");btn.classList.add("tab-active");
+    document.querySelectorAll(".page-panel").forEach(p=>p.classList.remove("active"));
+    el(tabId).classList.add("active");
+  })
+})
+function nowTime() { return new Date().toTimeString().slice(0,8); }
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function clearLogPanel(){const p=el('logPanel');p.innerHTML='';p.dataset.started='1';el('logCount').textContent="0 条";}
+function addLogItem(time,step,detail){
+  const p=el('logPanel');
+  const r=document.createElement('div');
+  r.className='flex gap-2 leading-relaxed';
+  r.innerHTML=`<span class="text-slate-500 shrink-0">[${escapeHtml(time)}]</span><span class="break-all text-slate-300">${escapeHtml(step)} ${detail?"｜"+escapeHtml(detail):""}</span>`;
+  p.appendChild(r);p.scrollTop=p.scrollHeight;el('logCount').textContent=`${p.children.length} 条`;
+}
+const TIERS = [
+  {re:/🔴|冲档/,cls:'tier tier-chong'},
+  {re:/🟡|稳档/,cls:'tier tier-wen'},
+  {re:/🟢|保档/,cls:'tier tier-bao'},
+];
+function colorizeTiers(c){
+  const kids=Array.from(c.children);
+  let w=null;
+  for(const n of kids){
+    const isH=/^H[1-6]$/.test(n.tagName);
+    const hit=TIERS.find(t=>t.re.test(n.textContent||''));
+    if(isH&&hit){w=document.createElement('div');w.className=hit.cls;c.insertBefore(w,n);w.appendChild(n);continue;}
+    if(isH)w=null;
+    if(w&&n.parentElement===c)w.appendChild(n);
+  }
+}
+/** 从Markdown报告文本提取院校名称，简单正则匹配中文院校名 */
+function extractSchoolNamesFromMarkdown(mdText){
+  const reg = /([\u4e00-\u9fa5]+?(大学|学院))/g;
+  const set = new Set();
+  let m;
+  while((m=reg.exec(mdText))!==null){
+    set.add(m[1]);
+  }
+  return Array.from(set);
+}
+function renderReport(md){
+  const box=el('report');
+  box.innerHTML=marked.parse(md);
+  colorizeTiers(box);
+  box.scrollTop=0;
+  // 提取候选院校，渲染勾选面板
+  currentCandidateSchools = extractSchoolNamesFromMarkdown(md);
+  selectedCompareNames = [];
+  if(currentCandidateSchools.length>0){
+    el("candidateWrap").classList.remove("hidden");
+    let html = "";
+    currentCandidateSchools.forEach(name=>{
+      html += `
+        <label class="flex items-center gap-1 border px-3 py-2 rounded-lg cursor-pointer hover:bg-slate-50">
+          <input type="checkbox" class="cand-chk" data-name="${escapeHtml(name)}">
+          <span>${escapeHtml(name)}</span>
+        </label>
+      `;
+    })
+    el("candidateList").innerHTML = html;
+    document.querySelectorAll(".cand-chk").forEach(chk=>{
+      chk.onchange = ()=>{
+        const n = chk.dataset.name;
+        if(chk.checked){
+          if(!selectedCompareNames.includes(n)) selectedCompareNames.push(n);
+        }else{
+          selectedCompareNames = selectedCompareNames.filter(x=>x!==n);
+        }
+      }
+    })
+  }else{
+    el("candidateWrap").classList.add("hidden");
+  }
+}
+function setLoading(on){
+  el('runBtn').disabled=on;
+  el('btnText').textContent=on?'执行中…':'开始查询';
+  el('spinner').classList.toggle('hidden',!on);
+}
+function collectForm(){
+  const regions=el('regions').value.split(/[,，、\s]+/).map(s=>s.trim()).filter(Boolean);
+  return {
+    score:Number(el('score').value)||null,
+    undergraduate_level:el('level').value,
+    major:el('major').value.trim()||null,
+    degree_type:el('degree').value,
+    target_regions:regions.length?regions:null,
+    query:""
+  };
+}
+el('queryForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const f=collectForm();
+  f.query=`本科${f.undergraduate_level}，报考${f.major}${f.degree_type}，预估${f.score}分，意向地区：${(f.target_regions||[]).join('、')||"不限"}`;
+  clearLogPanel();
+  el('report').innerHTML='<div class="text-slate-400 text-sm">等待后端智能体执行…</div>';
+  el("candidateWrap").classList.add("hidden");
+  setLoading(true);
+  try{
+    const resp=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(f)});
+    if(!resp.ok)throw new Error(`HTTP ${resp.status}`);
+    const data=await resp.json();
+    data.log_list.forEach(item=>addLogItem(item.time,item.step,item.detail));
+    renderReport(data.report_markdown);
+  }catch(err){
+    addLogItem(nowTime(),"请求异常",String(err));
+    el('report').innerHTML=`<div class="text-red-500">⚠️接口调用失败：${escapeHtml(err.message)}</div>`;
+  }finally{
+    setLoading(false);
+  }
+});
+el('clearBtn').addEventListener('click',()=>{
+  el('logPanel').innerHTML='<div class="text-slate-500">等待提交…</div>';
+  el('logCount').textContent='0 条';
+  el('report').innerHTML='<div class="text-slate-400 text-sm">报告会显示在这里。</div>';
+  el("candidateWrap").classList.add("hidden");
+  currentCandidateSchools=[];selectedCompareNames=[];
+});
+// 跳转到对比页面，执行对比查询（适配后端LLM生成markdown对比，不再读取your_school.db）
+el("goCompareBtn").onclick = async ()=>{
+  if(selectedCompareNames.length===0){
+    alert("请至少勾选一所院校");
+    return;
+  }
+  // 获取当前页面填写的专业，传给对比接口
+  const currentMajor = el("major").value.trim();
+  document.querySelector('[data-tab="tab2"]').click();
+  el("compareEmptyTip").style.display="none";
+  el("compareMissingTip").style.display="none";
+  el("compareTableWrap").style.display="none";
+
+  try{
+    const res = await fetch(API_COMPARE,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        school_names: selectedCompareNames,
+        major: currentMajor
+      })
+    });
+    if(!res.ok){
+      const errData = await res.json();
+      alert("对比生成失败：" + (errData.detail || "服务异常"));
+      el("compareEmptyTip").innerText = "院校对比生成失败";
+      el("compareEmptyTip").style.display="block";
+      return;
+    }
+    const j = await res.json();
+    // j.compare_markdown 直接用marked渲染
+    el("compareTableWrap").innerHTML = marked.parse(j.compare_markdown);
+    el("compareTableWrap").style.display="block";
+  }catch(err){
+    alert("请求出错："+ String(err));
+  }
+}
+// ========== AI学习计划 + localStorage打卡 ==========
+function getStudyLocal(){const r=localStorage.getItem("studyData");return r?JSON.parse(r):{planMarkdown:"",records:[]};}
+function saveStudyLocal(o){localStorage.setItem("studyData",JSON.stringify(o));}
+async function renderStudyPlan(){
+  const d=getStudyLocal();
+  el("planOutput").innerHTML=marked.parse(d.planMarkdown||"AI生成的计划将展示在这里");
+  renderStudyRecords();
+}
+function renderStudyRecords(){
+  const d=getStudyLocal();
+  let h="";
+  d.records.forEach((r,i)=>{
+    h+=`<div class="border p-2 rounded mb-2 text-sm"><div>${escapeHtml(r.date)}｜${escapeHtml(r.subject)}｜${escapeHtml(r.hour)}小时</div><button data-idx="${i}" class="del-record text-xs text-red-500">删除</button></div>`;
+  })
+  el("studyRecordBox").innerHTML=h||"<div class='text-slate-400 text-sm'>暂无打卡记录</div>";
+  document.querySelectorAll(".del-record").forEach(b=>{
+    b.onclick=()=>{
+      const idx=Number(b.dataset.idx);
+      const data=getStudyLocal();
+      data.records.splice(idx,1);saveStudyLocal(data);renderStudyRecords();
+    }
+  })
+}
+el("addRecordBtn").onclick=()=>{
+  const date=new Date().toLocaleDateString();
+  const subj=prompt("科目：");
+  const hour=prompt("学习小时数：");
+  if(!subj||!hour)return;
+  const d=getStudyLocal();
+  d.records.push({date,subject:subj,hour});saveStudyLocal(d);renderStudyRecords();
+}
+el("studyPlanForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const payload={
+    exam_date:el("spExamDate").value,
+    daily_hours:Number(el("spDailyHour").value),
+    weak_subjects:el("spWeak").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    strong_subjects:el("spStrong").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean),
+    target_score:Number(el("spTarget").value)
+  };
+  const res=await fetch(API_STUDY_PLAN,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+  const j=await res.json();
+  const d=getStudyLocal();
+  d.planMarkdown=j.plan_markdown;saveStudyLocal(d);renderStudyPlan();
+})
+window.onload=async ()=>{
+  el("spExamDate").value="2026-12-21";
+  renderStudyPlan();
+}
+</script>
+</body>
+</html>

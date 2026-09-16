@@ -1,0 +1,6 @@
+# requirement.txt
+openai>=1.60.0
+chromadb>=0.6.0
+sentence-transformers>=3.0.0
+python-dotenv>=1.0.0
+requests>=2.32.0

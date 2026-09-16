@@ -1,0 +1,20 @@
+# 密钥：绝不提交
+.env
+.env.local
+
+# Jupyter / Python 生成物
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+
+# Notebook 运行时算出来的中间产物（每个人自己跑出来，不入库）
+*.npy
+chunks.json
+*.db/
+
+# 向量数据库的数据目录 —— `docker compose up` 之后自动生成，几十上百 MB
+volumes/
